@@ -7,7 +7,7 @@ This guide explains how to securely download UDEV rule files directly to your sy
 ## Command Syntax
 ```bash
 sudo sh -c 'curl -fL https://raw.https://github.com/emax9000/Fix/blob/main/50-qmk.rules \
-    -o /etc/udev/rules.d/<RULE_NAME>.rule && chmod 644 /etc/udev/rules.d/50-qmk.rules'
+    -o /etc/udev/rules.d/50-qmk.rules && chmod 644 /etc/udev/rules.d/50-qmk.rules'
 ```
 
 ## Parameter Reference
