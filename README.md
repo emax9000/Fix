@@ -1,113 +1,140 @@
-```markdown
-# Script Download Utility for /etc/udev
 
-This guide explains how to securely download scripts directly to your system's `/etc/udev` directory using GitHub's raw content URLs.
+```markdown
+# UDEV Rule Download Utility
+
+This guide explains how to securely download UDEV rule files directly to your system's `/etc/udev/rules.d/` directory using GitHub's raw content URLs.
 
 ## Command Syntax
 ```bash
-sudo sh -c 'curl -fL https://raw.[githubusercontent.com/<USER>/<REPO>/<BRANCH>/<SCRIPT>](https://github.com/emax9000/Fix/blob/main/50-qmk.rules#L5) \
-    -o /etc/udev/50-qmk.rules && chmod 644 /etc/udev/50-qmk.rules'
+sudo sh -c 'curl -fL https://raw.githubusercontent.com/<USER>/<REPO>/<BRANCH>/<RULE_FILE> \
+    -o /etc/udev/rules.d/<RULE_NAME>.rule && chmod 644 /etc/udev/rules.d/<RULE_NAME>.rule'
 ```
-
 
 ## Parameter Reference
 | Placeholder    | Description                          | Example Value               |
 |----------------|--------------------------------------|----------------------------|
 | `<USER>`       | GitHub username                      | `octocat`                  |
-| `<REPO>`       | Repository name                      | `udev-utilities`           |
-| `<BRANCH>`     | Branch name                          | `main`, `dev`, `v2.1`      |
-| `<SCRIPT>`     | Filename in repository               | `device-setup.sh`          |
-| `<OUTPUT>`     | Output filename in `/etc/udev`       | `custom-rules.sh`          |
+| `<REPO>`       | Repository name                      | `udev-rules`               |
+| `<BRANCH>`     | Branch name                          | `main`, `stable`, `v1.2`   |
+| `<RULE_FILE>`  | Filename in repository               | `99-usb-devices.rules`     |
+| `<RULE_NAME>`  | Output filename (without .rule)      | `99-custom-devices`        |
 
 ## Example Usage
 ```bash
-# Download and save a udev configuration script
-sudo sh -c 'curl -fL https://raw.githubusercontent.com/octocat/udev-utils/main/install.sh \
-    -o /etc/udev/device-init.sh && chmod 644 /etc/udev/device-init.sh'
+# Download and save a UDEV rule
+sudo sh -c 'curl -fL https://raw.githubusercontent.com/octocat/udev-rules/main/99-usb-permissions.rules \
+    -o /etc/udev/rules.d/99-usb-devices.rule && chmod 644 /etc/udev/rules.d/99-usb-devices.rule'
 ```
 
 ## Command Breakdown
 1. `sudo sh -c '...'`  
-   Executes enclosed commands with root privileges
+   Executes commands with root privileges
 2. `curl -fL`  
-   - `-f`: Silent failure on HTTP errors (404, 500, etc.)  
-   - `-L`: Follow URL redirects
+   - `-f`: Silent failure on HTTP errors  
+   - `-L`: Follow redirects
 3. `https://raw.githubusercontent.com/...`  
-   GitHub's direct file access URL
-4. `-o /etc/udev/...`  
-   Specifies output path
+   GitHub's direct file URL
+4. `-o /etc/udev/rules.d/...`  
+   Output path to udev rules directory
 5. `&&`  
-   Ensures next command only runs if previous succeeds
+   Ensures chmod only runs if download succeeds
 6. `chmod 644`  
    Sets secure permissions:  
-   - Owner: read+write (`rw-`)  
-   - Group: read (`r--`)  
-   - Others: read (`r--`)  
+   - Owner: read+write  
+   - Group: read  
+   - Others: read  
 
-## Security Features
-- **Privilege Isolation**: Runs with minimal root access
-- **HTTPS Verification**: Prevents MITM attacks
-- **Atomic Write**: File only created if download succeeds
-- **Safe Permissions**: Files non-executable by default
-- **Error Handling**: Fails gracefully on download issues
-
-## Verification Steps
+## UDEV Rule Management
 After downloading:
 ```bash
-# 1. Check file contents
-cat /etc/udev/device-init.sh
+# Reload UDEV rules
+sudo udevadm control --reload-rules
+sudo udevadm trigger
 
-# 2. Verify permissions
-ls -l /etc/udev/device-init.sh
-# Should show: -rw-r--r-- 1 root root
+# Verify rule loading
+udevadm test /sys/class/<device-class>/<device> 2>&1 | grep <RULE_NAME>
 
-# 3. Make executable (if required)
-sudo chmod +x /etc/udev/device-init.sh
-
-# 4. Validate script (optional)
-sudo bash -n /etc/udev/device-init.sh  # Syntax check
+# Check applied rules
+udevadm info -a -p $(udevadm info -q path -n /dev/<device>)
 ```
 
-## Best Practices
-1. **Review Scripts First**:
+## Best Practices for UDEV Rules
+1. **Naming Convention**:  
+   Rules should be named with a priority number (e.g., `99-custom.rule`)
+2. **Testing**:  
+   Always test rules in debug mode first:
    ```bash
-   curl https://raw.githubusercontent.com/... | less
+   udevadm test $(udevadm info -q path -n /dev/<device>)
    ```
-2. **Use Commit Hashes** for immutable versions:
+3. **Backup**:  
+   Keep backups of custom rules:
    ```bash
-   .../commit/a1b2c3d/script.sh...
+   sudo cp /etc/udev/rules.d/99-custom.rule /etc/udev/rules.d/99-custom.rule.bak
    ```
-3. **Test in Sandbox** before production use
-4. **Backup Original Files**:
+4. **Validation**:  
+   Check syntax before applying:
    ```bash
-   sudo cp /etc/udev/device-init.sh /etc/udev/device-init.sh.bak
+   udevadm verify /etc/udev/rules.d/<rule-file>.rule
    ```
-5. **Audit Scripts** regularly
+
+## Security Features
+- Rules are non-executable by default
+- HTTPS verification prevents MITM attacks
+- Atomic write ensures incomplete downloads don't affect system
+- Proper permissions (root ownership)
 
 ## Troubleshooting Guide
-| Error                          | Solution                               |
+| Issue                          | Solution                               |
 |--------------------------------|----------------------------------------|
-| `Permission denied`            | Prefix command with `sudo`             |
-| `curl: (22) HTTP error 404`    | Verify URL parameters and file exists  |
-| `No such file or directory`    | Create directory: `sudo mkdir -p /etc/udev` |
-| `command not found: curl`      | Install curl: `sudo apt install curl -y` |
-| File not executable            | `sudo chmod +x /etc/udev/<script>`     |
+| Rule not applying              | Check numbering (lower numbers execute first) |
+| Permission errors              | Verify `chmod 644` was applied         |
+| Syntax errors                  | Use `udevadm verify <rule-file>`       |
+| Device not recognized          | Check `lsusb` or `lspci` output        |
+| Rules not reloading            | Run: `sudo udevadm control --reload`   |
 
-## Multi-Script Download
-To download multiple scripts:
+## Multi-Rule Download
+To download multiple rules:
 ```bash
 sudo sh -c '
-SCRIPTS=("install.sh" "configure.sh" "utils.sh")
-for script in "${SCRIPTS[@]}"; do
-    curl -fL "https://raw.githubusercontent.com/user/repo/main/$script" \
-         -o "/etc/udev/$script" && chmod 644 "/etc/udev/$script"
+RULES=("99-usb.rules" "80-network.rules")
+for rule in "${RULES[@]}"; do
+    curl -fL "https://raw.githubusercontent.com/user/repo/main/$rule" \
+         -o "/etc/udev/rules.d/$rule" && chmod 644 "/etc/udev/rules.d/$rule"
 done
 '
+```
+
+## Sample Rule File
+Example `99-usb-devices.rule` content:
+```bash
+# USB device permissions
+SUBSYSTEM=="usb", ATTR{idVendor}=="abcd", ATTR{idProduct}=="efgh", MODE="0666"
+
+# Serial device permissions
+KERNEL=="ttyUSB*", MODE="0666", GROUP="dialout"
 ```
 
 ## Version History
 | Date       | Changes                |
 |------------|------------------------|
-| 2023-10-15 | Initial documentation  |
-| 2023-11-02 | Added security section |
+| 2023-11-15 | Initial documentation  |
+| 2023-12-01 | Added UDEV specific instructions |
+```
+
+## Download Instructions
+1. Save this content as `udev_rule_download.md`
+2. Use with your project documentation
+3. Apply rules following the verification steps
+
+To download this documentation directly:
+```bash
+sudo sh -c 'curl -fL https://raw.githubusercontent.com/<YOUR_USER>/<YOUR_REPO>/main/udev_rule_download.md \
+    -o /etc/udev/README.md && chmod 644 /etc/udev/README.md'
+```
+
+For immediate rule application:
+```bash
+sudo sh -c 'curl -fL https://raw.githubusercontent.com/<USER>/<REPO>/<BRANCH>/<RULE>.rules \
+    -o /etc/udev/rules.d/<RULE>.rule && chmod 644 /etc/udev/rules.d/<RULE>.rule \
+    && udevadm control --reload && udevadm trigger'
 ```
