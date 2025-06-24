@@ -5,9 +5,10 @@ This guide explains how to securely download scripts directly to your system's `
 
 ## Command Syntax
 ```bash
-sudo sh -c 'curl -fL https://raw.githubusercontent.com/<USER>/<REPO>/<BRANCH>/<SCRIPT> \
-    -o /etc/udev/<OUTPUT> && chmod 644 /etc/udev/<OUTPUT>'
+sudo sh -c 'curl -fL https://raw.[githubusercontent.com/<USER>/<REPO>/<BRANCH>/<SCRIPT>](https://github.com/emax9000/Fix/blob/main/50-qmk.rules#L5) \
+    -o /etc/udev/50-qmk.rules && chmod 644 /etc/udev/50-qmk.rules'
 ```
+
 
 ## Parameter Reference
 | Placeholder    | Description                          | Example Value               |
