@@ -121,17 +121,6 @@ KERNEL=="ttyUSB*", MODE="0666", GROUP="dialout"
 | 2023-12-01 | Added UDEV specific instructions |
 ```
 
-## Download Instructions
-1. Save this content as `udev_rule_download.md`
-2. Use with your project documentation
-3. Apply rules following the verification steps
-
-To download this documentation directly:
-```bash
-sudo sh -c 'curl -fL https://raw.githubusercontent.com/<YOUR_USER>/<YOUR_REPO>/main/udev_rule_download.md \
-    -o /etc/udev/README.md && chmod 644 /etc/udev/README.md'
-```
-
 For immediate rule application:
 ```bash
 sudo sh -c 'curl -fL https://raw.githubusercontent.com/<USER>/<REPO>/<BRANCH>/<RULE>.rules \
