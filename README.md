@@ -1,5 +1,4 @@
 
-
 ### UDEV Rule Download Utility
 
 This guide explains how to securely download UDEV rule files directly to your system's `/etc/udev/rules.d/` directory using GitHub's raw content URLs.
@@ -112,13 +111,6 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="abcd", ATTR{idProduct}=="efgh", MODE="0666"
 
 # Serial device permissions
 KERNEL=="ttyUSB*", MODE="0666", GROUP="dialout"
-```
-
-## Version History
-| Date       | Changes                |
-|------------|------------------------|
-| 2023-11-15 | Initial documentation  |
-| 2023-12-01 | Added UDEV specific instructions |
 ```
 
 For immediate rule application:
